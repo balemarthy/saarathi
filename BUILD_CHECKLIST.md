@@ -12,17 +12,17 @@ for why it's built this way.
       blast radius isolated)
 
 ## Phase 1 — Project skeleton
-- [ ] Install Node.js (Mac — see `DECISIONS.md` #6 on why Mac is the build
-      machine)
-- [ ] Create an empty Electron project
-- [ ] Get a blank transparent, always-on-top window showing on screen —
+- [x] Install Node.js (built on Windows instead of Mac for this pass — see
+      `SESSION_LOG.md` 2026-09-18)
+- [x] Create an empty Electron project
+- [x] Get a blank transparent, always-on-top window showing on screen —
       nothing else yet
 
 ## Phase 2 — The orb (visual only, no logic behind it)
-- [ ] Draw a static circle/orb in the window
-- [ ] Add a glow effect to it
-- [ ] Add a rotation animation
-- [ ] Add 4 distinct visual states — idle / listening / thinking / done —
+- [x] Draw a static circle/orb in the window
+- [x] Add a glow effect to it
+- [x] Add a rotation animation
+- [x] Add 4 distinct visual states — idle / listening / thinking / done —
       switchable by hand for now (no real trigger wired in yet)
 
 ## Phase 3 — Hotkey
