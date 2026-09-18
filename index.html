@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Saarathi</title>
+  <link rel="stylesheet" href="orb.css" />
+</head>
+<body>
+  <button id="close-btn" title="Quit Saarathi">&times;</button>
+
+  <div id="orb-container">
+    <svg id="orb" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--orb-core)" />
+          <stop offset="60%" stop-color="var(--orb-mid)" />
+          <stop offset="100%" stop-color="var(--orb-edge)" />
+        </radialGradient>
+      </defs>
+      <circle id="orb-ring" cx="100" cy="100" r="70" fill="none" stroke="var(--orb-ring)" stroke-width="2" stroke-dasharray="6 10" />
+      <circle cx="100" cy="100" r="60" fill="url(#glow)" />
+    </svg>
+  </div>
+
+  <div id="dev-controls">
+    <button data-state="idle">Idle (1)</button>
+    <button data-state="listening">Listening (2)</button>
+    <button data-state="thinking">Thinking (3)</button>
+    <button data-state="done">Done (4)</button>
+  </div>
+
+  <script src="orb.js"></script>
+</body>
+</html>

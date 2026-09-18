@@ -1,0 +1,137 @@
+:root {
+  --orb-core: #ffffff;
+  --orb-mid: #7dd3fc;
+  --orb-edge: rgba(56, 189, 248, 0);
+  --orb-ring: rgba(125, 211, 252, 0.6);
+  --spin-duration: 12s;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: -apple-system, "Segoe UI", sans-serif;
+  user-select: none;
+}
+
+#orb-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#orb {
+  width: 160px;
+  height: 160px;
+  filter: drop-shadow(0 0 18px var(--orb-mid));
+  animation: spin var(--spin-duration) linear infinite;
+  transition: filter 0.3s ease;
+  cursor: grab;
+}
+
+#orb-ring {
+  transform-origin: 100px 100px;
+  animation: spin-reverse 8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* --- State: idle --- */
+body[data-orb-state="idle"] {
+  --orb-mid: #7dd3fc;
+  --orb-ring: rgba(125, 211, 252, 0.5);
+  --spin-duration: 16s;
+}
+
+/* --- State: listening --- */
+body[data-orb-state="listening"] {
+  --orb-mid: #4ade80;
+  --orb-ring: rgba(74, 222, 128, 0.7);
+  --spin-duration: 6s;
+}
+body[data-orb-state="listening"] #orb {
+  animation: spin 6s linear infinite, pulse 1s ease-in-out infinite;
+}
+
+/* --- State: thinking --- */
+body[data-orb-state="thinking"] {
+  --orb-mid: #a78bfa;
+  --orb-ring: rgba(167, 139, 250, 0.7);
+  --spin-duration: 1.2s;
+}
+
+/* --- State: done --- */
+body[data-orb-state="done"] {
+  --orb-mid: #fbbf24;
+  --orb-ring: rgba(251, 191, 36, 0.8);
+  --spin-duration: 16s;
+}
+body[data-orb-state="done"] #orb {
+  animation: spin 16s linear infinite, pulse 0.4s ease-out 2;
+}
+
+#dev-controls {
+  position: fixed;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+#dev-controls button {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  cursor: pointer;
+}
+
+#dev-controls button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+#close-btn {
+  position: fixed;
+  top: 4px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#close-btn:hover {
+  background: rgba(220, 38, 38, 0.8);
+}
