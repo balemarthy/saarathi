@@ -157,5 +157,9 @@ local only).
 - `main.js`: audio arrives with a mode (wake / hotkey / followup); ambient
   speech without the name is dropped unlogged. `Ctrl+Shift+F8` toggles wake
   listening and closes the mic.
-- Smoke-tested: app starts, mic opens, no errors. **Not yet verified with a
-  real voice** — needs live testing (accent, room noise, false triggers).
+- Smoke-tested: app starts, mic opens, no errors.
+- **Verified with a real voice (2026-09-20):** "Saarathi, open the calculator"
+  in one breath works; "Saarathi" then a command a few seconds later works;
+  hotkey + "open notepad" ends on silence; normal talk without the name does
+  nothing. Still to confirm: `Ctrl+Shift+F8` toggle (mic icon in tray) and a
+  longer soak for false triggers from TV/calls.
