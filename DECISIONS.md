@@ -123,3 +123,9 @@ contradict what actually happened.
 Each exchange logs input/output tokens and USD cost (from a small per-model
 price table in `main.js`) to the terminal and `logs/history.jsonl`. Only
 Claude costs money; whisper and SAPI are local and free.
+
+## 13. Model fixed to Claude Haiku 4.5
+The model is hardcoded (`claude-haiku-4-5-20251001` in `main.js`), with no
+environment override. Cheapest and fastest option, and enough for a
+three-tool command assistant. Change it in code only if the loop ever proves
+too dumb.

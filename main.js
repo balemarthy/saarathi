@@ -10,14 +10,15 @@ const { toolDefinitions, executeTool } = require('./tools');
 // Tap once to start listening, tap again to stop. Electron has no key-up
 // event, so true hold-to-talk is deferred (would need uiohook-napi).
 const HOTKEY = 'Control+Shift+F9';
-const MODEL = process.env.SAARATHI_MODEL || 'claude-haiku-4-5-20251001';
+// Fixed on purpose: Haiku is the cheapest model and plenty for short commands.
+const MODEL = 'claude-haiku-4-5-20251001';
 const SYSTEM_PROMPT =
   'You are Saarathi, a voice assistant on the user\'s desktop. You can open a website, open an ' +
   'installed app, or search the web using your tools; when the user asks for one of these, call ' +
   'the tool. Otherwise just answer. Your reply is spoken aloud, so keep it to one or two short ' +
   'plain sentences: no markdown, no lists, no emoji.';
 
-// USD per million tokens. Extend this if you change SAARATHI_MODEL.
+// USD per million tokens for MODEL.
 const PRICING = { 'claude-haiku-4-5': { input: 1, output: 5 } };
 let sessionCost = 0;
 let sessionChats = 0;

@@ -78,7 +78,7 @@ text-to-speech (BUILD_CHECKLIST.md Phases 3–6).
 - Mic capture in the renderer, mic-only permission handler in `main.js`.
 - Claude call from the main process via the Anthropic SDK (plain text, no
   tools yet). Default model `claude-haiku-4-5-20251001`, override with
-  `SAARATHI_MODEL`. `ANTHROPIC_API_KEY` loaded from a gitignored `.env`.
+  the removed `SAARATHI_MODEL` override. `ANTHROPIC_API_KEY` loaded from a gitignored `.env`.
 - Windows SAPI TTS: PowerShell spawned with fixed args, reply text passed on
   stdin (never in the command string).
 - Orb states now driven by the real pipeline (listening / thinking / done /
