@@ -207,3 +207,10 @@ Hugging Face) into `vendor/whisper/`. Benchmarked: base.en ~2 s, small.en
 ~6 s, threads don't help. Implemented base-for-screening, small-for-commands
 (`DECISIONS.md` #15); each small.en run logs `[stt] small.en N.Ns` in the
 terminal. `logs/calibration.txt` deleted at the user's request after tuning.
+
+**Latency cut:** user found the ~8 s one-breath wait too slow. Benchmarked
+options: extra threads (no gain), greedy decoding (no gain), flash attention
+(small gain), and shrinking whisper's audio window with `-ac` to the clip's
+real length (2x). Implemented `-fa` + dynamic `-ac` in `transcribe()`
+(`DECISIONS.md` #15a): base ~1.0 s, small ~2.6 s for a typical 3 s command,
+identical transcripts on test clips. Rigorous voice testing by the user next.

@@ -154,3 +154,10 @@ commands (after the name, hotkey, or follow-up). Trade-off: one-breath
 "Saarathi, <command>" takes ~8 s end to end. `SAARATHI_FAST=1` skips the small
 model; if `ggml-small.en.bin` isn't in `vendor/whisper/` the app falls back to
 base.en. Both models are gitignored downloads.
+
+### 15a. Speed-up: shrink whisper's audio window per clip
+whisper.cpp pads every clip to 30 s, so a 3 s command cost the same as 30 s.
+`transcribe()` now passes `-ac <clip seconds * 50 + 150>` (capped at 1500,
+never shorter than the clip) plus `-fa`. Same transcripts, ~2x faster:
+typical command base 1.0 s / small 2.6 s (was 2.0 / 6.0); one-breath
+"Saarathi, <command>" ~3.6 s (was ~8 s). Beam-size/greedy changes gave no gain.

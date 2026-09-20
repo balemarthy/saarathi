@@ -118,7 +118,11 @@ function transcribe(wavBuffer, model) {
     const file = path.join(os.tmpdir(), `saarathi-${Date.now()}.wav`);
     fs.writeFileSync(file, wavBuffer);
     const cleanup = () => fs.rm(file, { force: true }, () => {});
-    const proc = spawn(WHISPER_EXE, ['-m', model, '-f', file, '-nt', '-np'], {
+    // Whisper normally pads every clip to 30 s. Shrink its audio window to the clip's
+    // real length (+3 s margin, never shorter than the clip) for a ~2x speed-up.
+    const seconds = Math.max(0, wavBuffer.length - 44) / 32000;
+    const audioCtx = Math.min(1500, Math.ceil(seconds * 50) + 150);
+    const proc = spawn(WHISPER_EXE, ['-m', model, '-f', file, '-nt', '-np', '-fa', '-ac', String(audioCtx)], {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
