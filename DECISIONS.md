@@ -144,3 +144,13 @@ Costs: the mic is open while wake listening is on, and any nearby speech
 triggers a ~2 s local whisper run. No audio leaves the machine; only the
 command after the name goes to Claude. Deaf while thinking/speaking so it
 doesn't hear itself.
+
+## 15. Two-stage speech-to-text: base.en screens, small.en transcribes commands
+`base.en` (~2 s) mispronounced/garbled some of the user's commands. `small.en`
+(~6 s on this 6-core CPU; extra threads don't help) is clearly more accurate
+("weather in Hyderabad" vs "whether in hide or a bed"). So `base.en` screens
+all ambient speech for the name, and `small.en` transcribes only actual
+commands (after the name, hotkey, or follow-up). Trade-off: one-breath
+"Saarathi, <command>" takes ~8 s end to end. `SAARATHI_FAST=1` skips the small
+model; if `ggml-small.en.bin` isn't in `vendor/whisper/` the app falls back to
+base.en. Both models are gitignored downloads.

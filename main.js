@@ -28,7 +28,11 @@ let sessionChats = 0;
 
 const WHISPER_DIR = path.join(__dirname, 'vendor', 'whisper');
 const WHISPER_EXE = path.join(WHISPER_DIR, 'Release', 'whisper-cli.exe');
-const WHISPER_MODEL = path.join(WHISPER_DIR, 'ggml-base.en.bin');
+// Two-stage speech-to-text: the small model screens ambient speech for the name;
+// the more accurate (3x slower) one transcribes the actual command, if installed.
+const WHISPER_FAST = path.join(WHISPER_DIR, 'ggml-base.en.bin');
+const WHISPER_ACCURATE = path.join(WHISPER_DIR, 'ggml-small.en.bin');
+const USE_ACCURATE = process.env.SAARATHI_FAST !== '1' && fs.existsSync(WHISPER_ACCURATE);
 
 // Temporary tuning aid: SAARATHI_CALIBRATE=1 logs what whisper heard for every
 // ambient utterance to logs/calibration.txt so the wake matcher can be tuned.
@@ -109,12 +113,12 @@ function speak(text) {
 }
 
 // Local speech-to-text via whisper.cpp. Fixed args, audio file only.
-function transcribe(wavBuffer) {
+function transcribe(wavBuffer, model) {
   return new Promise((resolve, reject) => {
     const file = path.join(os.tmpdir(), `saarathi-${Date.now()}.wav`);
     fs.writeFileSync(file, wavBuffer);
     const cleanup = () => fs.rm(file, { force: true }, () => {});
-    const proc = spawn(WHISPER_EXE, ['-m', WHISPER_MODEL, '-f', file, '-nt', '-np'], {
+    const proc = spawn(WHISPER_EXE, ['-m', model, '-f', file, '-nt', '-np'], {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -251,17 +255,28 @@ let followupDeadline = 0;
 
 // mode: 'wake' (ambient speech, act only if it starts with the name),
 // 'hotkey' (user pressed the hotkey), 'followup' (name heard alone, command next).
+// Whisper emits tags like [BLANK_AUDIO] or (silence) for quiet/noise.
+function cleanTranscript(s) {
+  return s.replace(/\[[^\]]*\]|\([^)]*\)/g, '').trim().slice(0, 1000);
+}
+
+// Transcribe with the fast model, or (for commands) the accurate one when installed.
+async function stt(wav, accurate) {
+  const model = accurate && USE_ACCURATE ? WHISPER_ACCURATE : WHISPER_FAST;
+  const t0 = Date.now();
+  const text = cleanTranscript(await transcribe(wav, model));
+  if (accurate && USE_ACCURATE) console.log(`[stt] small.en ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  return text;
+}
+
 async function processAudio(wav, mode) {
   if (mode !== 'wake') setState('thinking');
 
   let text = '';
   transcribing += 1;
   try {
-    // Whisper emits tags like [BLANK_AUDIO] or (silence) for quiet/noise.
-    const raw = (await transcribe(wav))
-      .replace(/\[[^\]]*\]|\([^)]*\)/g, '')
-      .trim()
-      .slice(0, 1000);
+    // Hotkey/follow-up audio is a command: go straight to the accurate model.
+    const raw = await stt(wav, mode !== 'wake');
     const wake = matchWake(raw);
     if (CALIBRATE && mode === 'wake') {
       console.log(`[heard] ${wake ? 'MATCH' : 'no   '} | ${raw}`);
@@ -278,14 +293,22 @@ async function processAudio(wav, mode) {
           // Spoken right after the name alone: this is the command.
           followupDeadline = 0;
           send('cancel-followup');
-          text = raw;
+          text = await stt(wav, true);
         } // else: ambient talk, dropped and never logged
       } else {
         console.log('[wake] heard the name');
         if (wake.command.length < 3) {
           followupDeadline = Date.now() + FOLLOWUP_WINDOW_MS;
           send('expect-command');
-        } else text = wake.command;
+        } else {
+          // Name plus command in one breath: re-transcribe the command accurately.
+          text = wake.command;
+          if (USE_ACCURATE) {
+            setState('thinking');
+            const refined = matchWake(await stt(wav, true));
+            if (refined && refined.command.length >= 3) text = refined.command;
+          }
+        }
       }
     } else {
       if (mode === 'followup') followupDeadline = 0;

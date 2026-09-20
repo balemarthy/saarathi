@@ -201,3 +201,9 @@ local only).
   after the name is heard alone, the next utterance within 8 s is the
   command even if it was captured as ambient (`followupDeadline` in
   `main.js`, renderer told to cancel its follow-up arm).
+
+**small.en added (two-stage STT):** downloaded `ggml-small.en.bin` (488 MB,
+Hugging Face) into `vendor/whisper/`. Benchmarked: base.en ~2 s, small.en
+~6 s, threads don't help. Implemented base-for-screening, small-for-commands
+(`DECISIONS.md` #15); each small.en run logs `[stt] small.en N.Ns` in the
+terminal. `logs/calibration.txt` deleted at the user's request after tuning.
