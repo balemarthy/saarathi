@@ -135,5 +135,11 @@ local only).
   hostnames, injection-style app names, unknown tools) all refused with
   nothing launched; Claude chose the right tool for "open youtube", "open the
   calculator", "search for ..." and declined "delete my documents folder".
-- **Not yet verified by voice:** actually launching a site/app/search by
-  speaking. Needs a live test.
+- **Verified by voice (2026-09-20):** all three tools launch correctly by
+  speaking, and `[usage]` cost lines show in the terminal. BUILD_CHECKLIST
+  Phase 7 complete.
+- Model fixed to Haiku 4.5 (`DECISIONS.md` #13).
+- Wake phrase requested. Picovoice Porcupine now requires commercial-use
+  approval for a key, so it's out. Leading option: whisper-gated wake phrase
+  (transcribe speech locally, act when the text contains "Saarathi"), built
+  after silence auto-stop. Awaiting go-ahead.

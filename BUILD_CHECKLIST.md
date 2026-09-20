@@ -50,9 +50,9 @@ for why it's built this way.
 ## Phase 7 — Add the 3 safe tools, one at a time
 - [x] Attach the 3-tool schema to the Claude API call
 - [x] Build the app-name-to-launch-command JSON config for this machine (`apps.json`, Windows)
-- [ ] Implement `open_website` executor — test with a spoken command
-- [ ] Implement `open_app` executor — test with a spoken command
-- [ ] Implement `search_web` executor — test with a spoken command
+- [x] Implement `open_website` executor — test with a spoken command
+- [x] Implement `open_app` executor — test with a spoken command
+- [x] Implement `search_web` executor — test with a spoken command
 
 ## Phase 8 — Wire the orb to the real loop
 - [ ] Connect orb states to actual pipeline stages: listening while
