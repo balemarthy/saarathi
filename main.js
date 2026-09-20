@@ -36,7 +36,7 @@ const CALIBRATE = process.env.SAARATHI_CALIBRATE === '1';
 
 let win = null;
 let busy = false; // a command is being processed (Claude call + speech)
-let transcribing = false;
+let transcribing = 0; // whisper runs in progress
 let dragOrigin = null;
 let anthropic = null;
 
@@ -241,18 +241,20 @@ app.whenReady().then(() => {
 
 ipcMain.on('quit-app', () => app.quit());
 
+// Ambient utterances that arrive while whisper is still busy wait here (newest 2 kept)
+// instead of being dropped, so a quick second try isn't lost.
+const pendingWake = [];
+
 // mode: 'wake' (ambient speech, act only if it starts with the name),
 // 'hotkey' (user pressed the hotkey), 'followup' (name heard alone, command next).
-ipcMain.on('audio', async (event, wav, mode) => {
-  if (!['wake', 'hotkey', 'followup'].includes(mode)) return;
-  if (mode === 'wake' && (busy || transcribing)) return; // drop ambient audio while occupied
+async function processAudio(wav, mode) {
   if (mode !== 'wake') setState('thinking');
 
   let text = '';
-  transcribing = true;
+  transcribing += 1;
   try {
     // Whisper emits tags like [BLANK_AUDIO] or (silence) for quiet/noise.
-    const raw = (await transcribe(Buffer.from(wav)))
+    const raw = (await transcribe(wav))
       .replace(/\[[^\]]*\]|\([^)]*\)/g, '')
       .trim()
       .slice(0, 1000);
@@ -266,20 +268,19 @@ ipcMain.on('audio', async (event, wav, mode) => {
       } catch {}
     }
     if (mode === 'wake') {
-      if (!wake) return; // ambient talk: dropped, never logged
-      console.log('[wake] heard the name');
-      if (wake.command.length < 3) {
-        send('expect-command');
-        return;
+      if (busy || !wake) text = ''; // ambient talk: dropped, never logged
+      else {
+        console.log('[wake] heard the name');
+        if (wake.command.length < 3) send('expect-command');
+        else text = wake.command;
       }
-      text = wake.command;
     } else {
       text = wake ? wake.command : raw; // "Saarathi, open youtube" via hotkey works too
     }
   } catch (err) {
     console.error('[error]', err.message);
   } finally {
-    transcribing = false;
+    transcribing -= 1;
   }
 
   if (text) await handleTranscript(text);
@@ -287,6 +288,24 @@ ipcMain.on('audio', async (event, wav, mode) => {
     console.log('[you] (nothing heard)');
     setState('idle');
   }
+
+  // Next waiting ambient utterance, unless a command has started in the meantime.
+  if (busy) pendingWake.length = 0;
+  else if (pendingWake.length && !transcribing) processAudio(pendingWake.shift(), 'wake');
+}
+
+ipcMain.on('audio', (event, wav, mode) => {
+  if (!['wake', 'hotkey', 'followup'].includes(mode)) return;
+  const buf = Buffer.from(wav);
+  if (mode === 'wake') {
+    if (busy) return; // Saarathi is answering: this may be its own voice
+    if (transcribing) {
+      pendingWake.push(buf);
+      if (pendingWake.length > 2) pendingWake.shift();
+      return;
+    }
+  }
+  processAudio(buf, mode);
 });
 
 ipcMain.on('renderer-log', (event, msg) => console.log('[renderer]', String(msg).slice(0, 500)));
