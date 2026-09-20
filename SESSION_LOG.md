@@ -163,3 +163,28 @@ local only).
   hotkey + "open notepad" ends on silence; normal talk without the name does
   nothing. Still to confirm: `Ctrl+Shift+F8` toggle (mic icon in tray) and a
   longer soak for false triggers from TV/calls.
+
+## 2026-09-20 — Wake phrase tuning from calibration data
+
+- User reported the wake phrase worked only sometimes. Added a calibration
+  mode (`SAARATHI_CALIBRATE=1` logs every ambient utterance's whisper text,
+  MATCH / no, to the terminal and `logs/calibration.txt`) and a green/grey
+  dot in the orb's corner showing wake listening on/off.
+- Calibration findings (base.en, user's voice): the name came out as
+  Saradi / Sara di / Sāradi (matched) but also Saturday (x4), Saudi, Sadehi,
+  Sari, Sada dee, Saredi (missed). Command text was sometimes misheard too
+  ("beauty of", "chargey beauty app" for ChatGPT).
+- **Bug found:** utterances spoken while whisper was still transcribing the
+  previous one (~2-3 s) were discarded — likely a main cause of "sometimes
+  works, sometimes doesn't". Fixed with a queue (`pendingWake`, newest 2
+  kept); still dropped while Saarathi is answering so it can't hear itself.
+- `wake.js`: added an alias list of the observed spellings, honoured only
+  in the first two words; the fuzzy rule now looks at the first three words
+  (was six). Verified offline: all 16 observed name utterances match, 16
+  ambient/look-alike sentences are rejected. Accepted trade-off: a sentence
+  starting with "Saturday"/"Sari" wakes it (cost: one cheap Claude call;
+  only the 3 safe tools are reachable).
+- Open option: `small.en` whisper model (~470 MB) for better accuracy on
+  commands, at ~2-3x transcription time. Not changed; user to decide.
+
+**Results of the re-test with these fixes: to be appended.**
