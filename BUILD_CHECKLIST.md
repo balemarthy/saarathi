@@ -6,8 +6,8 @@ for why it's built this way.
 
 ## Phase 0 — Accounts & keys
 - [x] Anthropic Console account — already existed from a prior project
-- [ ] Add billing / buy credits — in progress
-- [ ] Generate a fresh, dedicated API key named "saarathi" (do not reuse
+- [x] Add billing / buy credits
+- [x] Generate a fresh, dedicated API key named "saarathi" (do not reuse
       existing keys from other projects — one key per project keeps cost and
       blast radius isolated)
 
@@ -26,24 +26,24 @@ for why it's built this way.
       switchable by hand for now (no real trigger wired in yet)
 
 ## Phase 3 — Hotkey
-- [ ] Register a global push-to-talk hotkey
-- [ ] Pressing it switches the orb to "listening" state — visual only, mic
+- [x] Register a global push-to-talk hotkey (tap-to-toggle, `Control+Shift+F9`)
+- [x] Pressing it switches the orb to "listening" state — visual only, mic
       still not wired
 
 ## Phase 4 — Speech-to-text loop
-- [ ] While hotkey is held, capture mic audio via Web Speech API
-- [ ] Transcribe speech to text and print it on screen or console — confirm
+- [x] While hotkey is held, capture mic audio (Web Speech API failed with a network error in Electron; replaced by local whisper.cpp — see `SESSION_LOG.md`)
+- [x] Transcribe speech to text and print it on screen or console — confirm
       it's accurate before moving on
 
 ## Phase 5 — Talk to Claude (plain text, no tools yet)
-- [ ] Send the transcribed text to Claude API as a normal message, no tool
+- [x] Send the transcribed text to Claude API as a normal message, no tool
       schema attached
-- [ ] Print Claude's text reply to console — confirm the API connection
+- [x] Print Claude's text reply to console — confirm the API connection
       actually works
 
 ## Phase 6 — Text-to-speech loop
-- [ ] Take Claude's text reply and speak it aloud via OS-native TTS
-- [ ] Confirm the full silent loop end to end: press hotkey → talk → hear
+- [x] Take Claude's text reply and speak it aloud via OS-native TTS
+- [x] Confirm the full silent loop end to end: press hotkey → talk → hear
       Claude's answer spoken back. No real actions yet — this just proves
       the pipe works.
 

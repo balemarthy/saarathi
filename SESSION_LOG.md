@@ -69,3 +69,38 @@ not true hold-to-talk — Electron's `globalShortcut` has no key-up event;
 `uiohook-napi` would be needed for real hold-to-talk, deferred for now),
 Web Speech API capture, a plain-text Claude API call, and SAPI
 text-to-speech (BUILD_CHECKLIST.md Phases 3–6).
+
+## 2026-09-20 — Session 2 (Hotkey + voice loop)
+
+**Built (BUILD_CHECKLIST.md Phases 3–6):**
+- Global hotkey `Control+Shift+F9` via `globalShortcut`, tap-to-toggle
+  (tap to start listening, tap again to stop).
+- Mic capture in the renderer, mic-only permission handler in `main.js`.
+- Claude call from the main process via the Anthropic SDK (plain text, no
+  tools yet). Default model `claude-haiku-4-5-20251001`, override with
+  `SAARATHI_MODEL`. `ANTHROPIC_API_KEY` loaded from a gitignored `.env`.
+- Windows SAPI TTS: PowerShell spawned with fixed args, reply text passed on
+  stdin (never in the command string).
+- Orb states now driven by the real pipeline (listening / thinking / done /
+  idle) instead of only the dev buttons.
+
+**Detour — Web Speech API failed:** `speech error: network` on first test
+(stock Electron has no Google API keys). Per the plan, switched to the
+documented fallback instead of debugging: local **whisper.cpp**
+(`whisper-bin-x64` build b5130, `ggml-base.en` model) in a gitignored
+`vendor/whisper/` folder. The renderer records 16 kHz mono PCM and encodes a
+WAV; main writes a temp file, runs `whisper-cli.exe` via `spawn` with an
+args array, and deletes the file. Transcription takes about 2-3 s. No key,
+no cost, audio stays local. `vendor/` must be re-downloaded on a fresh
+clone (not in git).
+
+**Verified:** hotkey -> speak -> transcript -> Claude reply, twice in a row,
+no errors in the terminal.
+
+**Housekeeping:** fixed stale `docs/` paths in README.md (docs live at the
+repo root); updated the checklist, including Phase 0.
+
+**Next:** Session 3 — the 3 tools (BUILD_CHECKLIST.md Phase 7): tool
+schema, per-machine app-name config (Windows), `open_website`, `open_app`,
+`search_web`. Possible small extra: auto-stop after ~1.5 s of silence so the
+hotkey needs one press instead of two.
