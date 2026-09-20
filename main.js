@@ -5,14 +5,22 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
+const { toolDefinitions, executeTool } = require('./tools');
 
 // Tap once to start listening, tap again to stop. Electron has no key-up
 // event, so true hold-to-talk is deferred (would need uiohook-napi).
 const HOTKEY = 'Control+Shift+F9';
 const MODEL = process.env.SAARATHI_MODEL || 'claude-haiku-4-5-20251001';
 const SYSTEM_PROMPT =
-  'You are Saarathi, a voice assistant on the user\'s desktop. Your reply is spoken aloud, ' +
-  'so answer in one or two short plain sentences: no markdown, no lists, no emoji.';
+  'You are Saarathi, a voice assistant on the user\'s desktop. You can open a website, open an ' +
+  'installed app, or search the web using your tools; when the user asks for one of these, call ' +
+  'the tool. Otherwise just answer. Your reply is spoken aloud, so keep it to one or two short ' +
+  'plain sentences: no markdown, no lists, no emoji.';
+
+// USD per million tokens. Extend this if you change SAARATHI_MODEL.
+const PRICING = { 'claude-haiku-4-5': { input: 1, output: 5 } };
+let sessionCost = 0;
+let sessionChats = 0;
 
 const WHISPER_DIR = path.join(__dirname, 'vendor', 'whisper');
 const WHISPER_EXE = path.join(WHISPER_DIR, 'Release', 'whisper-cli.exe');
@@ -32,6 +40,22 @@ function setState(state) {
   if (win && !win.isDestroyed()) win.webContents.send('set-state', state);
 }
 
+function costOf(usage) {
+  const key = Object.keys(PRICING).find((k) => MODEL.startsWith(k));
+  if (!key) return null;
+  const p = PRICING[key];
+  const cacheWrite = usage.cache_creation_input_tokens || 0;
+  const cacheRead = usage.cache_read_input_tokens || 0;
+  return (
+    ((usage.input_tokens || 0) * p.input +
+      cacheWrite * p.input * 1.25 +
+      cacheRead * p.input * 0.1 +
+      (usage.output_tokens || 0) * p.output) /
+    1e6
+  );
+}
+
+// Returns { text, toolCalls, usage }. Claude only picks a tool; it never runs anything.
 async function askClaude(text) {
   const client = getClient();
   if (!client) throw new Error('ANTHROPIC_API_KEY is not set (create .env in the project root)');
@@ -39,13 +63,14 @@ async function askClaude(text) {
     model: MODEL,
     max_tokens: 300,
     system: SYSTEM_PROMPT,
+    tools: toolDefinitions(),
     messages: [{ role: 'user', content: text }],
   });
-  return msg.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join(' ')
-    .trim();
+  return {
+    text: msg.content.filter((b) => b.type === 'text').map((b) => b.text).join(' ').trim(),
+    toolCalls: msg.content.filter((b) => b.type === 'tool_use').slice(0, 3),
+    usage: msg.usage,
+  };
 }
 
 // Windows SAPI via PowerShell. The text goes in over stdin, never into the
@@ -110,11 +135,35 @@ async function handleTranscript(text) {
   console.log('[you]', text);
   setState('thinking');
   try {
-    const reply = await askClaude(text);
-    console.log('[claude]', reply);
-    logExchange({ you: text, claude: reply });
+    const { text: reply, toolCalls, usage } = await askClaude(text);
+    const actions = [];
+    for (const call of toolCalls) {
+      console.log('[tool]', call.name, JSON.stringify(call.input));
+      actions.push({ tool: call.name, input: call.input, result: await executeTool(call.name, call.input) });
+    }
+    // With a tool call, speak what actually happened; otherwise Claude's answer.
+    const spoken = actions.length ? actions.map((a) => a.result).join(' ') : reply;
+    console.log('[claude]', spoken);
+
+    const cost = costOf(usage);
+    sessionChats += 1;
+    if (cost !== null) sessionCost += cost;
+    console.log(
+      `[usage] in ${usage.input_tokens} / out ${usage.output_tokens} tokens` +
+        (cost !== null ? ` = $${cost.toFixed(5)} (session: ${sessionChats} chats, $${sessionCost.toFixed(5)})` : '')
+    );
+    logExchange({
+      you: text,
+      claude: spoken,
+      ...(actions.length ? { actions } : {}),
+      model: MODEL,
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cost_usd: cost,
+    });
+
     setState('done');
-    if (reply) await speak(reply);
+    if (spoken) await speak(spoken);
   } catch (err) {
     console.error('[error]', err.message);
     logExchange({ you: text, error: err.message });

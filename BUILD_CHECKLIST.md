@@ -48,8 +48,8 @@ for why it's built this way.
       the pipe works.
 
 ## Phase 7 — Add the 3 safe tools, one at a time
-- [ ] Attach the 3-tool schema to the Claude API call
-- [ ] Build the app-name-to-launch-command JSON config for this machine (Mac)
+- [x] Attach the 3-tool schema to the Claude API call
+- [x] Build the app-name-to-launch-command JSON config for this machine (`apps.json`, Windows)
 - [ ] Implement `open_website` executor — test with a spoken command
 - [ ] Implement `open_app` executor — test with a spoken command
 - [ ] Implement `search_web` executor — test with a spoken command

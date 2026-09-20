@@ -116,3 +116,24 @@ before Session 3.
 spoken each time. Added conversation history: each exchange is appended as
 one JSON line (time, you, claude/error) to `logs/history.jsonl` (gitignored,
 local only).
+
+## 2026-09-20 — Session 3 (the 3 tools) + cost tracking
+
+- `tools.js`: tool schema plus executors for `open_website`, `open_app`,
+  `search_web`. `open_website` accepts only http/https URLs with a dotted
+  hostname and opens via Electron's `shell.openExternal`; `search_web` opens
+  a Google results page; `open_app` looks the name up in `apps.json` and
+  launches via `cmd /c start` with the target passed as an argument. Claude's
+  output never reaches a command string. Unknown tools/apps are refused.
+- `main.js`: sends the tool schema with each request; runs up to 3 tool
+  calls; speaks the executor's result (see `DECISIONS.md` #11).
+- Cost tracking: each exchange prints `[usage] in X / out Y tokens = $Z
+  (session total)` and stores tokens + `cost_usd` + model in
+  `logs/history.jsonl`. Haiku 4.5 pricing: $1 / $5 per million tokens; about
+  $0.001 per exchange with the tool schema attached.
+- Headless test (no mic): refusal paths (`javascript:`, `file:`, bare
+  hostnames, injection-style app names, unknown tools) all refused with
+  nothing launched; Claude chose the right tool for "open youtube", "open the
+  calculator", "search for ..." and declined "delete my documents folder".
+- **Not yet verified by voice:** actually launching a site/app/search by
+  speaking. Needs a live test.

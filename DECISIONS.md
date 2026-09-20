@@ -98,3 +98,28 @@ sequencing. Actual implementation (Node install, Electron scaffolding,
 writing the orb, wiring the hotkey, calling the API, debugging) moves to
 Claude Code, which can execute commands and edit files directly rather than
 being guided through in chat.
+
+## 9. Speech-to-text: whisper.cpp, not Web Speech API (supersedes #5 for STT)
+Web Speech API failed in Electron on Windows (`speech error: network` —
+stock Chromium has no Google API keys). Switched to local whisper.cpp with
+the `ggml-base.en` model: free, no key, audio stays on the machine, ~2-3 s
+per short command. TTS stays OS-native (SAPI). The binary and model live in
+a gitignored `vendor/whisper/` folder.
+
+## 10. search_web opens browser results (deviates from ARCHITECTURE.md)
+ARCHITECTURE.md described `search_web` as Claude searching and speaking a
+summary. That needs Anthropic's server-side web search tool (extra per-search
+cost, must be enabled for the org). For v1 `search_web` instead opens the
+default browser on a Google results page and speaks a confirmation. Upgrade
+path if a spoken summary is wanted: add the web search server tool.
+
+## 11. Tool confirmations are spoken from the executor, not a second Claude call
+When Claude calls a tool, the app speaks the executor's own result ("Opening
+youtube.com.") rather than sending the result back for a second model call.
+Saves a round trip of latency and cost, and the spoken text can never
+contradict what actually happened.
+
+## 12. Cost visibility
+Each exchange logs input/output tokens and USD cost (from a small per-model
+price table in `main.js`) to the terminal and `logs/history.jsonl`. Only
+Claude costs money; whisper and SAPI are local and free.
