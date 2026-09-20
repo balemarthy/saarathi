@@ -92,16 +92,32 @@ function transcribe(wavBuffer) {
   });
 }
 
+// One JSON line per exchange, in a gitignored logs/ folder.
+function logExchange(entry) {
+  try {
+    const dir = path.join(__dirname, 'logs');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(
+      path.join(dir, 'history.jsonl'),
+      JSON.stringify({ time: new Date().toISOString(), ...entry }) + '\n'
+    );
+  } catch (err) {
+    console.error('[warn] could not write history:', err.message);
+  }
+}
+
 async function handleTranscript(text) {
   console.log('[you]', text);
   setState('thinking');
   try {
     const reply = await askClaude(text);
     console.log('[claude]', reply);
+    logExchange({ you: text, claude: reply });
     setState('done');
     if (reply) await speak(reply);
   } catch (err) {
     console.error('[error]', err.message);
+    logExchange({ you: text, error: err.message });
     setState('done');
     await speak('Sorry, something went wrong.').catch(() => {});
   }

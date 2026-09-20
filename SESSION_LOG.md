@@ -111,3 +111,8 @@ and can't confirm whether the second hotkey press was made. Do ~4 more
 careful runs (press once, speak, press again, wait) and note whether the
 orb goes thinking -> done -> idle by itself each time. If it doesn't, debug
 before Session 3.
+
+**Update:** three further test runs — orb went to thinking and the reply was
+spoken each time. Added conversation history: each exchange is appended as
+one JSON line (time, you, claude/error) to `logs/history.jsonl` (gitignored,
+local only).
