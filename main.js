@@ -244,6 +244,10 @@ ipcMain.on('quit-app', () => app.quit());
 // Ambient utterances that arrive while whisper is still busy wait here (newest 2 kept)
 // instead of being dropped, so a quick second try isn't lost.
 const pendingWake = [];
+// After the name is heard alone, the next utterance within this window is the command,
+// even if it was already captured as ambient audio while whisper was busy.
+const FOLLOWUP_WINDOW_MS = 8000;
+let followupDeadline = 0;
 
 // mode: 'wake' (ambient speech, act only if it starts with the name),
 // 'hotkey' (user pressed the hotkey), 'followup' (name heard alone, command next).
@@ -268,13 +272,23 @@ async function processAudio(wav, mode) {
       } catch {}
     }
     if (mode === 'wake') {
-      if (busy || !wake) text = ''; // ambient talk: dropped, never logged
-      else {
+      if (busy) text = '';
+      else if (!wake) {
+        if (Date.now() < followupDeadline && raw.length >= 3) {
+          // Spoken right after the name alone: this is the command.
+          followupDeadline = 0;
+          send('cancel-followup');
+          text = raw;
+        } // else: ambient talk, dropped and never logged
+      } else {
         console.log('[wake] heard the name');
-        if (wake.command.length < 3) send('expect-command');
-        else text = wake.command;
+        if (wake.command.length < 3) {
+          followupDeadline = Date.now() + FOLLOWUP_WINDOW_MS;
+          send('expect-command');
+        } else text = wake.command;
       }
     } else {
+      if (mode === 'followup') followupDeadline = 0;
       text = wake ? wake.command : raw; // "Saarathi, open youtube" via hotkey works too
     }
   } catch (err) {

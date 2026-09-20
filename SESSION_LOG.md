@@ -187,4 +187,17 @@ local only).
 - Open option: `small.en` whisper model (~470 MB) for better accuracy on
   commands, at ~2-3x transcription time. Not changed; user to decide.
 
-**Results of the re-test with these fixes: to be appended.**
+**Re-test results (calibration mode, 4 exchanges, $0.0048):**
+- Wake: 4 of 4 name attempts matched (all heard as "Saturday" / "Hey,
+  Saturday" — the alias list was the right fix). Ambient talk and a 15 s
+  monologue produced no action.
+- Tools by wake phrase: calculator, weather search and YouTube all worked.
+- Command text from whisper base.en was sometimes garbled ("for weather in
+  Bangalore. Hey, that's for weather in Bangalore", "Where is Shana
+  Channel? Open.") though Claude still chose sensible tools.
+- **Bug found:** saying the name and the command back-to-back sent the
+  command to the ambient path (queued while the name was still being
+  transcribed) and it was dropped, so the user had to repeat it. Fixed:
+  after the name is heard alone, the next utterance within 8 s is the
+  command even if it was captured as ambient (`followupDeadline` in
+  `main.js`, renderer told to cancel its follow-up arm).

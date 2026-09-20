@@ -226,6 +226,11 @@ window.saarathi.onExpectCommand(async () => {
   if (await ensureMic()) arm('followup');
 });
 
+// The command was already captured (heard while the name was being transcribed).
+window.saarathi.onCancelFollowup(() => {
+  if (armed === 'followup' && !seg) disarm();
+});
+
 window.saarathi.onToggleWake(async () => {
   wakeEnabled = !wakeEnabled;
   document.body.setAttribute('data-wake', wakeEnabled ? 'on' : 'off');

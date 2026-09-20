@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('saarathi', {
   log: (msg) => ipcRenderer.send('renderer-log', msg),
   onToggleListen: (cb) => ipcRenderer.on('toggle-listen', () => cb()),
   onExpectCommand: (cb) => ipcRenderer.on('expect-command', () => cb()),
+  onCancelFollowup: (cb) => ipcRenderer.on('cancel-followup', () => cb()),
   onToggleWake: (cb) => ipcRenderer.on('toggle-wake', () => cb()),
   onSetState: (cb) => ipcRenderer.on('set-state', (event, state) => cb(state)),
 });
