@@ -6,10 +6,13 @@ const os = require('os');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { toolDefinitions, executeTool } = require('./tools');
+const { matchWake } = require('./wake');
 
 // Tap once to start listening, tap again to stop. Electron has no key-up
 // event, so true hold-to-talk is deferred (would need uiohook-napi).
 const HOTKEY = 'Control+Shift+F9';
+// Turns always-on wake-phrase listening on/off (also closes the mic).
+const WAKE_TOGGLE_HOTKEY = 'Control+Shift+F8';
 // Fixed on purpose: Haiku is the cheapest model and plenty for short commands.
 const MODEL = 'claude-haiku-4-5-20251001';
 const SYSTEM_PROMPT =
@@ -28,6 +31,8 @@ const WHISPER_EXE = path.join(WHISPER_DIR, 'Release', 'whisper-cli.exe');
 const WHISPER_MODEL = path.join(WHISPER_DIR, 'ggml-base.en.bin');
 
 let win = null;
+let busy = false; // a command is being processed (Claude call + speech)
+let transcribing = false;
 let dragOrigin = null;
 let anthropic = null;
 
@@ -35,6 +40,10 @@ function getClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   if (!anthropic) anthropic = new Anthropic();
   return anthropic;
+}
+
+function send(channel, ...args) {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, ...args);
 }
 
 function setState(state) {
@@ -134,6 +143,7 @@ function logExchange(entry) {
 
 async function handleTranscript(text) {
   console.log('[you]', text);
+  busy = true;
   setState('thinking');
   try {
     const { text: reply, toolCalls, usage } = await askClaude(text);
@@ -171,6 +181,7 @@ async function handleTranscript(text) {
     setState('done');
     await speak('Sorry, something went wrong.').catch(() => {});
   }
+  busy = false;
   setState('idle');
 }
 
@@ -186,6 +197,7 @@ function createWindow() {
     hasShadow: false,
     webPreferences: {
       preload: __dirname + '/preload.js',
+      autoplayPolicy: 'no-user-gesture-required', // let the always-on mic start without a click
     },
   });
 
@@ -217,20 +229,50 @@ app.whenReady().then(() => {
   const ok = globalShortcut.register(HOTKEY, () => {
     if (win && !win.isDestroyed()) win.webContents.send('toggle-listen');
   });
+  if (!globalShortcut.register(WAKE_TOGGLE_HOTKEY, () => send('toggle-wake'))) {
+    console.error(`[error] could not register hotkey ${WAKE_TOGGLE_HOTKEY}`);
+  }
   if (!ok) console.error(`[error] could not register hotkey ${HOTKEY} (already in use?)`);
 });
 
 ipcMain.on('quit-app', () => app.quit());
 
-ipcMain.on('audio', async (event, wav) => {
-  setState('thinking');
+// mode: 'wake' (ambient speech, act only if it starts with the name),
+// 'hotkey' (user pressed the hotkey), 'followup' (name heard alone, command next).
+ipcMain.on('audio', async (event, wav, mode) => {
+  if (!['wake', 'hotkey', 'followup'].includes(mode)) return;
+  if (mode === 'wake' && (busy || transcribing)) return; // drop ambient audio while occupied
+  if (mode !== 'wake') setState('thinking');
+
+  let text = '';
+  transcribing = true;
   try {
-    // Whisper emits bracketed tags like [BLANK_AUDIO] for silence/noise.
-    const text = (await transcribe(Buffer.from(wav))).replace(/\[[^\]]*\]/g, '').trim().slice(0, 1000);
-    if (text) await handleTranscript(text);
-    else { console.log('[you] (nothing heard)'); setState('idle'); }
+    // Whisper emits tags like [BLANK_AUDIO] or (silence) for quiet/noise.
+    const raw = (await transcribe(Buffer.from(wav)))
+      .replace(/\[[^\]]*\]|\([^)]*\)/g, '')
+      .trim()
+      .slice(0, 1000);
+    const wake = matchWake(raw);
+    if (mode === 'wake') {
+      if (!wake) return; // ambient talk: dropped, never logged
+      console.log('[wake] heard the name');
+      if (wake.command.length < 3) {
+        send('expect-command');
+        return;
+      }
+      text = wake.command;
+    } else {
+      text = wake ? wake.command : raw; // "Saarathi, open youtube" via hotkey works too
+    }
   } catch (err) {
     console.error('[error]', err.message);
+  } finally {
+    transcribing = false;
+  }
+
+  if (text) await handleTranscript(text);
+  else if (mode !== 'wake') {
+    console.log('[you] (nothing heard)');
     setState('idle');
   }
 });
