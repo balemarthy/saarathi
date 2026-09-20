@@ -95,7 +95,7 @@ no cost, audio stays local. `vendor/` must be re-downloaded on a fresh
 clone (not in git).
 
 **Verified:** hotkey -> speak -> transcript -> Claude reply, twice in a row,
-no errors in the terminal.
+no errors in the terminal. Spoken reply confirmed audible on the speakers.
 
 **Housekeeping:** fixed stale `docs/` paths in README.md (docs live at the
 repo root); updated the checklist, including Phase 0.
@@ -104,3 +104,10 @@ repo root); updated the checklist, including Phase 0.
 schema, per-machine app-name config (Windows), `open_website`, `open_app`,
 `search_web`. Possible small extra: auto-stop after ~1.5 s of silence so the
 hotkey needs one press instead of two.
+
+**Open item — more testing needed:** on the second test run the orb's
+automatic stage switching may not have happened, but the tester was rushing
+and can't confirm whether the second hotkey press was made. Do ~4 more
+careful runs (press once, speak, press again, wait) and note whether the
+orb goes thinking -> done -> idle by itself each time. If it doesn't, debug
+before Session 3.
