@@ -62,6 +62,7 @@ const COOLDOWN_MS = 800; // deaf period after Saarathi finishes speaking
 
 let mic = null; // { stream, ctx, source, proc }
 let wakeEnabled = true;
+document.body.setAttribute('data-wake', 'on');
 let armed = null; // null | 'hotkey' | 'followup'
 let armTimer = null;
 let noiseFloor = 0.005;
@@ -227,6 +228,7 @@ window.saarathi.onExpectCommand(async () => {
 
 window.saarathi.onToggleWake(async () => {
   wakeEnabled = !wakeEnabled;
+  document.body.setAttribute('data-wake', wakeEnabled ? 'on' : 'off');
   window.saarathi.log('wake listening ' + (wakeEnabled ? 'ON' : 'OFF'));
   if (wakeEnabled) await ensureMic();
   else releaseMicIfUnneeded();

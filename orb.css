@@ -135,3 +135,20 @@ body[data-orb-state="done"] #orb {
 #close-btn:hover {
   background: rgba(220, 38, 38, 0.8);
 }
+
+/* Wake listening indicator: green = listening for "Saarathi", grey = off */
+#wake-dot {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+  opacity: 0.8;
+}
+
+body[data-wake="on"] #wake-dot {
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+}

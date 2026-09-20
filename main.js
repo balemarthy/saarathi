@@ -30,6 +30,10 @@ const WHISPER_DIR = path.join(__dirname, 'vendor', 'whisper');
 const WHISPER_EXE = path.join(WHISPER_DIR, 'Release', 'whisper-cli.exe');
 const WHISPER_MODEL = path.join(WHISPER_DIR, 'ggml-base.en.bin');
 
+// Temporary tuning aid: SAARATHI_CALIBRATE=1 logs what whisper heard for every
+// ambient utterance to logs/calibration.txt so the wake matcher can be tuned.
+const CALIBRATE = process.env.SAARATHI_CALIBRATE === '1';
+
 let win = null;
 let busy = false; // a command is being processed (Claude call + speech)
 let transcribing = false;
@@ -253,6 +257,14 @@ ipcMain.on('audio', async (event, wav, mode) => {
       .trim()
       .slice(0, 1000);
     const wake = matchWake(raw);
+    if (CALIBRATE && mode === 'wake') {
+      console.log(`[heard] ${wake ? 'MATCH' : 'no   '} | ${raw}`);
+      try {
+        fs.mkdirSync(path.join(__dirname, 'logs'), { recursive: true });
+        fs.appendFileSync(path.join(__dirname, 'logs', 'calibration.txt'), `${wake ? 'MATCH' : 'no   '} | ${raw}
+`);
+      } catch {}
+    }
     if (mode === 'wake') {
       if (!wake) return; // ambient talk: dropped, never logged
       console.log('[wake] heard the name');
