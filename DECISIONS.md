@@ -129,3 +129,18 @@ The model is hardcoded (`claude-haiku-4-5-20251001` in `main.js`), with no
 environment override. Cheapest and fastest option, and enough for a
 three-tool command assistant. Change it in code only if the loop ever proves
 too dumb.
+
+## 14. Wake phrase added, whisper-gated (revises #3)
+Wake-word listening was deferred in #3. Requested after the core loop worked.
+Picovoice Porcupine was ruled out: it now requires commercial-use approval
+for an access key. Chosen instead: energy-based voice detection cuts the mic
+into utterances; each is transcribed locally by whisper.cpp; the app acts
+only if the text starts with "Saarathi" (fuzzy match in `wake.js`, since
+whisper spells the name many ways) and drops everything else without logging
+it. "Saarathi, open YouTube" works in one breath; "Saarathi." alone starts a
+follow-up listen. The hotkey (`Ctrl+Shift+F9`) still works and now ends on
+silence too; `Ctrl+Shift+F8` turns wake listening off (closing the mic).
+Costs: the mic is open while wake listening is on, and any nearby speech
+triggers a ~2 s local whisper run. No audio leaves the machine; only the
+command after the name goes to Claude. Deaf while thinking/speaking so it
+doesn't hear itself.

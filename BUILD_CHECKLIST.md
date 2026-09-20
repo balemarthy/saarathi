@@ -60,8 +60,8 @@ for why it's built this way.
       fires — replacing the manual switching from Phase 2
 
 ## Later (deliberately deferred, not v1)
-- Wake-word always-listening mode (Picovoice/Porcupine) — see `DECISIONS.md`
-  #3
+- ~~Wake-word always-listening mode~~ — done, whisper-gated; see
+  `DECISIONS.md` #14
 - Port to Windows laptop — see `DECISIONS.md` #6
 - Higher-quality TTS (ElevenLabs/OpenAI) if native voice quality bothers you
 - Native voice model (OpenAI Realtime / Gemini Live) if the local

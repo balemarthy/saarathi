@@ -9,13 +9,13 @@ Claude decide which one to call, based on what you said.
 - No computer-use / screenshot-vision / simulated mouse or keyboard input
 - No file deletion, editing, or any destructive action
 - No sending messages, emails, or submitting forms on Vamsi's behalf
-- No always-on wake-word listening in v1 (push-to-talk only — see
-  `DECISIONS.md` #3)
+- Wake-phrase listening is whisper-gated and local-only (see `DECISIONS.md`
+  #14); no audio is sent anywhere except the command text after the name
 - No routing a single voice loop across multiple LLM providers (see
   `DECISIONS.md` #4)
 
 ## Interaction loop
-1. Push-to-talk hotkey summons the orb and starts listening
+1. Say "Saarathi, ..." (or press the hotkey) to start; recording ends on silence
 2. Web Speech API transcribes speech to text, locally
 3. Text goes to Claude API with a fixed 3-tool schema (below)
 4. Claude returns which tool to call, with parameters — it never touches the

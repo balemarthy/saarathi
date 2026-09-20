@@ -143,3 +143,19 @@ local only).
   approval for a key, so it's out. Leading option: whisper-gated wake phrase
   (transcribe speech locally, act when the text contains "Saarathi"), built
   after silence auto-stop. Awaiting go-ahead.
+
+## 2026-09-20 — Silence auto-stop + wake phrase (whisper-gated)
+
+- `orb.js` rewritten around one always-on mic pipeline with energy-based
+  voice detection: utterances end after ~1 s of silence, so the hotkey needs
+  one press (a second press still ends early). Deaf while thinking/speaking
+  plus an 0.8 s cooldown so it can't hear its own voice.
+- `wake.js`: fuzzy wake-word matcher. Tested against whisper's real output
+  for a synthetic voice ("Sautarathai", "Sarti", "Sāgāratha") and against
+  look-alikes ("Sarah", "Karthi", "Saturday", "Sorry"...). Known edge:
+  "Sara the dog" matches.
+- `main.js`: audio arrives with a mode (wake / hotkey / followup); ambient
+  speech without the name is dropped unlogged. `Ctrl+Shift+F8` toggles wake
+  listening and closes the mic.
+- Smoke-tested: app starts, mic opens, no errors. **Not yet verified with a
+  real voice** — needs live testing (accent, room noise, false triggers).
